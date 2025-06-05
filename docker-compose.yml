@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  radioss-bot:
+    image: ghcr.io/dascanard/radioss-discord:latest
+    container_name: radioss-discord-bot
+    restart: unless-stopped
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN} 
