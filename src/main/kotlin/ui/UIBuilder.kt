@@ -103,6 +103,12 @@ class UIBuilder {
             .setPlaceholder("🔊 Select Volume")
             .setRequiredRange(1, 1)
         
+        // Add 1-4% steps
+        for (volume in 1..4) {
+            menuBuilder.addOption("🔈 ${volume}%", volume.toString(), "Set volume to $volume%")
+        }
+        
+        // Add 5% steps from 5 to 100
         for (volume in 5..100 step 5) {
             val emoji = when {
                 volume <= 15 -> "🔈"
