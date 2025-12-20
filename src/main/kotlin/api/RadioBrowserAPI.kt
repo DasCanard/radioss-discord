@@ -19,7 +19,7 @@ class RadioBrowserAPI {
         coerceInputValues = true
     }
     
-    private val baseUrl = "http://stations.radioss.app/json"
+    private val baseUrl = "http://stations.richy.sh/json"
 
     suspend fun searchStations(searchTerm: String, limit: Int = 10): List<RadioStation> {
         return searchByName(searchTerm, limit)
