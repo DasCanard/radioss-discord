@@ -2,10 +2,12 @@ package me.richy.radioss.bot
 
 import kotlinx.coroutines.*
 import me.richy.radioss.commands.CommandManager
+import me.richy.radioss.database.FavoriteDatabase
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.ButtonHandler
 import me.richy.radioss.handlers.SearchHandler
 import me.richy.radioss.handlers.SelectMenuHandler
+import me.richy.radioss.services.FavoriteService
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.JDABuilder
@@ -26,10 +28,13 @@ class RadioBot(private val token: String) : ListenerAdapter() {
     private val api = me.richy.radioss.api.RadioBrowserAPI()
     private val uiBuilder = UIBuilder()
     
+    private val favoriteDatabase = FavoriteDatabase()
+    private val favoriteService = FavoriteService(favoriteDatabase)
+    
     private val searchHandler = SearchHandler()
     private val audioHandler = AudioHandler()
-    private val commandManager = CommandManager(api, audioHandler, searchHandler, uiBuilder, this)
-    private val buttonHandler = ButtonHandler(searchHandler, audioHandler, uiBuilder)
+    private val commandManager = CommandManager(api, audioHandler, searchHandler, favoriteService, uiBuilder, this)
+    private val buttonHandler = ButtonHandler(searchHandler, audioHandler, favoriteService, uiBuilder)
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
     private var jda: JDA? = null
@@ -67,6 +72,8 @@ class RadioBot(private val token: String) : ListenerAdapter() {
         disconnectTimers.clear()
         
         coroutineScope.cancel()
+        
+        favoriteService.close()
         
         jda?.shutdown()
         logger.info("Bot stopped")

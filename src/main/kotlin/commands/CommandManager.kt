@@ -4,6 +4,7 @@ import me.richy.radioss.api.RadioBrowserAPI
 import me.richy.radioss.bot.RadioBot
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.SearchHandler
+import me.richy.radioss.services.FavoriteService
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
@@ -13,6 +14,7 @@ class CommandManager(
     private val api: RadioBrowserAPI,
     private val audioHandler: AudioHandler,
     private val searchHandler: SearchHandler,
+    private val favoriteService: FavoriteService,
     private val uiBuilder: UIBuilder,
     private val radioBot: RadioBot
 ) {
@@ -23,10 +25,10 @@ class CommandManager(
     private fun createCommands(): Map<String, Command> {
         return mapOf(
             // Search Commands
-            "search" to SearchCommand(api, searchHandler, uiBuilder),
-            "top" to TopCommand(api, searchHandler, uiBuilder),
-            "country" to CountryCommand(api, searchHandler, uiBuilder),
-            "genre" to GenreCommand(api, searchHandler, uiBuilder),
+            "search" to SearchCommand(api, searchHandler, favoriteService, uiBuilder),
+            "top" to TopCommand(api, searchHandler, favoriteService, uiBuilder),
+            "country" to CountryCommand(api, searchHandler, favoriteService, uiBuilder),
+            "genre" to GenreCommand(api, searchHandler, favoriteService, uiBuilder),
             "random" to RandomCommand(api, uiBuilder),
             "help" to HelpCommand(uiBuilder),
             
@@ -34,11 +36,11 @@ class CommandManager(
             "play" to PlayCommand(audioHandler, uiBuilder),
             "stop" to StopCommand(audioHandler, uiBuilder),
             "volume" to VolumeCommand(audioHandler, uiBuilder),
-            "nowplaying" to NowPlayingCommand(audioHandler, uiBuilder),
+            "nowplaying" to NowPlayingCommand(audioHandler, favoriteService, uiBuilder),
             "247" to Command247(audioHandler, radioBot, uiBuilder),
             
             // Other Commands
-            "favorites" to FavoritesCommand(uiBuilder)
+            "favorites" to FavoritesCommand(favoriteService, searchHandler, uiBuilder)
         )
     }
     

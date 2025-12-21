@@ -31,6 +31,9 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     
+    // SQLite Database
+    implementation("org.xerial:sqlite-jdbc:3.44.1.0")
+    
     testImplementation(kotlin("test"))
 }
 

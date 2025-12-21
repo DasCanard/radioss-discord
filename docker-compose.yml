@@ -6,4 +6,6 @@ services:
     container_name: radioss-discord-bot
     restart: unless-stopped
     environment:
-      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN} 
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+    volumes:
+      - ./botdata:/app/data

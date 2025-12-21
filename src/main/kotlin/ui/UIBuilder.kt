@@ -16,7 +16,8 @@ class UIBuilder {
         currentPage: Int,
         totalPages: Int,
         title: String,
-        searchTerm: String? = null
+        searchTerm: String? = null,
+        favoriteStatus: Map<String, Boolean> = emptyMap()
     ): MessageEmbed {
         val embed = EmbedBuilder()
             .setTitle("🎵 $title")
@@ -31,7 +32,9 @@ class UIBuilder {
         } else {
             stations.forEachIndexed { index, station ->
                 val number = (currentPage - 1) * 5 + index + 1
-                val title = "$number. ${if (station.name.length > 30) station.name.take(30) + "..." else station.name}"
+                val isFavorite = favoriteStatus[station.stationUuid] ?: false
+                val favoriteIcon = if (isFavorite) " ❤️" else ""
+                val title = "$number. ${if (station.name.length > 30) station.name.take(30) + "..." else station.name}$favoriteIcon"
                 val info = buildString {
                     if (station.country.isNotEmpty()) append("🌍 ${station.country}")
                     if (station.tags.isNotEmpty()) {
@@ -60,7 +63,13 @@ class UIBuilder {
         return embed.build()
     }
     
-    fun createPaginationButtons(currentPage: Int, totalPages: Int, hasStations: Boolean): List<ActionRow> {
+    fun createPaginationButtons(
+        currentPage: Int, 
+        totalPages: Int, 
+        hasStations: Boolean,
+        stations: List<RadioStation> = emptyList(),
+        favoriteStatus: Map<String, Boolean> = emptyMap()
+    ): List<ActionRow> {
         val rows = mutableListOf<ActionRow>()
         
         if (totalPages > 1) {
@@ -75,14 +84,32 @@ class UIBuilder {
         }
         
         if (hasStations) {
-            val actionButtons = listOf(
-                Button.success("play_1", "▶️ 1"),
-                Button.success("play_2", "▶️ 2"),
-                Button.success("play_3", "▶️ 3"),
-                Button.success("play_4", "▶️ 4"),
-                Button.success("play_5", "▶️ 5")
-            )
-            rows.add(ActionRow.of(actionButtons))
+            // Play-Buttons dynamisch basierend auf Anzahl der Stationen erstellen
+            if (stations.isNotEmpty()) {
+                val playButtons = stations.mapIndexed { index, _ ->
+                    Button.success("play_${index + 1}", "▶️ ${index + 1}")
+                }
+                rows.add(ActionRow.of(playButtons))
+                
+                // Favoriten-Buttons für die aktuellen Stationen
+                val favoriteButtons = stations.mapIndexed { index, station ->
+                    val isFavorite = favoriteStatus[station.stationUuid] ?: false
+                    val buttonId = if (isFavorite) "unfavorite_${station.stationUuid}" else "favorite_${station.stationUuid}"
+                    val buttonLabel = if (isFavorite) "❤️ ${index + 1}" else "🤍 ${index + 1}"
+                    Button.secondary(buttonId, buttonLabel)
+                }
+                rows.add(ActionRow.of(favoriteButtons))
+            } else {
+                // Fallback: Wenn keine Stationen übergeben wurden, aber hasStations true ist
+                val actionButtons = listOf(
+                    Button.success("play_1", "▶️ 1"),
+                    Button.success("play_2", "▶️ 2"),
+                    Button.success("play_3", "▶️ 3"),
+                    Button.success("play_4", "▶️ 4"),
+                    Button.success("play_5", "▶️ 5")
+                )
+                rows.add(ActionRow.of(actionButtons))
+            }
             
             val utilityButtons = listOf(
                 Button.danger("stop_audio", "⏹️ Stop"),
@@ -142,13 +169,15 @@ class UIBuilder {
     fun createAudioStatusEmbed(
         station: RadioStation?,
         volume: Int,
-        isPlaying: Boolean
+        isPlaying: Boolean,
+        isFavorite: Boolean = false
     ): MessageEmbed {
         val embed = EmbedBuilder()
             .setColor(if (isPlaying) Color.GREEN else Color.RED)
         
         if (isPlaying && station != null) {
-            embed.setTitle("🎵 Now Playing")
+            val favoriteIcon = if (isFavorite) " ❤️" else ""
+            embed.setTitle("🎵 Now Playing$favoriteIcon")
                 .setDescription("**${station.name}**")
                 .addField("🌍 Country", station.country.ifEmpty { "Unknown" }, true)
                 .addField("🎵 Genre", station.tags.split(",").take(2).joinToString(", ").ifEmpty { "Not specified" }, true)
@@ -158,12 +187,94 @@ class UIBuilder {
                 .addField("⭐ Rating", station.votes.toString(), true)
         } else {
             embed.setTitle("⏹️ Not Active")
-                .setDescription("No music is currently playing")
-                .addField("🔊 Volume", "$volume%", true)
+            .setDescription("No music is currently playing")
+            .addField("🔊 Volume", "$volume%", true)
         }
         
         embed.setFooter(Version.FOOTER_TEXT)
         return embed.build()
+    }
+    
+    fun createFavoriteButton(station: RadioStation, isFavorite: Boolean): Button {
+        val buttonId = if (isFavorite) "unfavorite_${station.stationUuid}" else "favorite_${station.stationUuid}"
+        val buttonLabel = if (isFavorite) "❤️ Remove Favorite" else "🤍 Add Favorite"
+        return Button.secondary(buttonId, buttonLabel)
+    }
+    
+    fun createFavoritesListEmbed(
+        stations: List<RadioStation>,
+        currentPage: Int,
+        totalPages: Int
+    ): MessageEmbed {
+        val embed = EmbedBuilder()
+            .setTitle("❤️ Your Favorites")
+            .setColor(Color.MAGENTA)
+        
+        if (stations.isEmpty()) {
+            embed.addField("❌ No Favorites", "You haven't favorited any stations yet. Use the favorite buttons in search results or now playing to add favorites!", false)
+        } else {
+            stations.forEachIndexed { index, station ->
+                val number = (currentPage - 1) * 5 + index + 1
+                val title = "$number. ${if (station.name.length > 30) station.name.take(30) + "..." else station.name} ❤️"
+                val info = buildString {
+                    if (station.country.isNotEmpty()) append("🌍 ${station.country}")
+                    if (station.tags.isNotEmpty()) {
+                        if (isNotEmpty()) append(" • ")
+                        append("🎵 ${station.tags.split(",").take(2).joinToString(", ")}")
+                    }
+                    if (station.bitrate > 0) {
+                        if (isNotEmpty()) append(" • ")
+                        append("🎧 ${station.bitrate}kbps")
+                    }
+                    if (station.votes > 0) {
+                        if (isNotEmpty()) append(" • ")
+                        append("⭐ ${station.votes}")
+                    }
+                }
+                embed.addField(title, info.ifEmpty { "No details available" }, false)
+            }
+        }
+        
+        if (totalPages > 1) {
+            embed.setFooter("Page $currentPage of $totalPages • ${Version.FOOTER_TEXT}")
+        } else {
+            embed.setFooter(Version.FOOTER_TEXT)
+        }
+        
+        return embed.build()
+    }
+    
+    fun createFavoritesButtons(
+        stations: List<RadioStation>,
+        currentPage: Int,
+        totalPages: Int
+    ): List<ActionRow> {
+        val rows = mutableListOf<ActionRow>()
+        
+        if (totalPages > 1) {
+            val navButtons = listOf(
+                Button.primary("fav_first_page", "⏮️ First").withDisabled(currentPage == 1),
+                Button.primary("fav_prev_page", "◀️ Previous").withDisabled(currentPage == 1),
+                Button.secondary("fav_page_info", "Page $currentPage/$totalPages").asDisabled(),
+                Button.primary("fav_next_page", "▶️ Next").withDisabled(currentPage == totalPages),
+                Button.primary("fav_last_page", "⏭️ Last").withDisabled(currentPage == totalPages)
+            )
+            rows.add(ActionRow.of(navButtons))
+        }
+        
+        if (stations.isNotEmpty()) {
+            val playButtons = stations.take(5).mapIndexed { index, _ ->
+                Button.success("fav_play_${index + 1}", "▶️ ${index + 1}")
+            }
+            rows.add(ActionRow.of(playButtons))
+            
+            val unfavoriteButtons = stations.take(5).mapIndexed { index, station ->
+                Button.danger("unfavorite_${station.stationUuid}", "❤️ Remove ${index + 1}")
+            }
+            rows.add(ActionRow.of(unfavoriteButtons))
+        }
+        
+        return rows
     }
     
     fun createHelpEmbed(): MessageEmbed {
