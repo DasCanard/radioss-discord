@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "me.richy.radioss"
-version = "0.7.0"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
