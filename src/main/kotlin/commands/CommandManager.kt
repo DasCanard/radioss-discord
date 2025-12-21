@@ -1,0 +1,65 @@
+package me.richy.radioss.commands
+
+import me.richy.radioss.api.RadioBrowserAPI
+import me.richy.radioss.bot.RadioBot
+import me.richy.radioss.handlers.AudioHandler
+import me.richy.radioss.handlers.SearchHandler
+import me.richy.radioss.ui.UIBuilder
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
+import org.slf4j.LoggerFactory
+
+class CommandManager(
+    private val api: RadioBrowserAPI,
+    private val audioHandler: AudioHandler,
+    private val searchHandler: SearchHandler,
+    private val uiBuilder: UIBuilder,
+    private val radioBot: RadioBot
+) {
+    private val logger = LoggerFactory.getLogger(CommandManager::class.java)
+    
+    private val commands: Map<String, Command> = createCommands()
+    
+    private fun createCommands(): Map<String, Command> {
+        return mapOf(
+            // Search Commands
+            "search" to SearchCommand(api, searchHandler, uiBuilder),
+            "top" to TopCommand(api, searchHandler, uiBuilder),
+            "country" to CountryCommand(api, searchHandler, uiBuilder),
+            "genre" to GenreCommand(api, searchHandler, uiBuilder),
+            "random" to RandomCommand(api, uiBuilder),
+            "help" to HelpCommand(uiBuilder),
+            
+            // Audio Commands
+            "play" to PlayCommand(audioHandler, uiBuilder),
+            "stop" to StopCommand(audioHandler, uiBuilder),
+            "volume" to VolumeCommand(audioHandler, uiBuilder),
+            "nowplaying" to NowPlayingCommand(audioHandler, uiBuilder),
+            "247" to Command247(audioHandler, radioBot, uiBuilder),
+            
+            // Other Commands
+            "favorites" to FavoritesCommand(uiBuilder)
+        )
+    }
+    
+    fun getAllCommands(): List<SlashCommandData> {
+        return commands.values.map { it.getCommandData() }
+    }
+    
+    fun executeCommand(event: SlashCommandInteractionEvent) {
+        val commandName = event.name
+        val command = commands[commandName]
+        
+        if (command != null) {
+            try {
+                command.execute(event)
+            } catch (e: Exception) {
+                logger.error("Error executing command '$commandName'", e)
+                throw e
+            }
+        } else {
+            logger.warn("Unknown command: $commandName")
+        }
+    }
+}
+

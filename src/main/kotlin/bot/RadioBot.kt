@@ -1,8 +1,7 @@
 package me.richy.radioss.bot
 
 import kotlinx.coroutines.*
-import me.richy.radioss.api.RadioBrowserAPI
-import me.richy.radioss.audio.GuildAudioManager
+import me.richy.radioss.commands.CommandManager
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.ButtonHandler
 import me.richy.radioss.handlers.SearchHandler
@@ -17,7 +16,6 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent
 import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import net.dv8tion.jda.api.requests.GatewayIntent
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
@@ -25,13 +23,12 @@ import java.util.concurrent.ConcurrentHashMap
 class RadioBot(private val token: String) : ListenerAdapter() {
     private val logger = LoggerFactory.getLogger(RadioBot::class.java)
     
-    private val api = RadioBrowserAPI()
+    private val api = me.richy.radioss.api.RadioBrowserAPI()
     private val uiBuilder = UIBuilder()
     
-    private val searchHandler = SearchHandler(api, uiBuilder)
-    private val audioHandler = AudioHandler(uiBuilder).apply {
-        setRadioBot(this@RadioBot)
-    }
+    private val searchHandler = SearchHandler()
+    private val audioHandler = AudioHandler()
+    private val commandManager = CommandManager(api, audioHandler, searchHandler, uiBuilder, this)
     private val buttonHandler = ButtonHandler(searchHandler, audioHandler, uiBuilder)
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
@@ -88,23 +85,7 @@ class RadioBot(private val token: String) : ListenerAdapter() {
         logger.info("Command '$commandName' from ${event.user.name} (${event.user.id})")
         
         try {
-            when {
-                isSearchCommand(commandName) -> {
-                    searchHandler.handleSearchCommand(event)
-                }
-                
-                isAudioCommand(commandName) -> {
-                    audioHandler.handleAudioCommand(event)
-                }
-                
-                commandName == "favorites" -> {
-                    handleFavoritesCommand(event)
-                }
-                
-                else -> {
-                    logger.warn("Unknown command: $commandName")
-                }
-            }
+            commandManager.executeCommand(event)
         } catch (e: Exception) {
             logger.error("Error in command '$commandName'", e)
             
@@ -252,11 +233,7 @@ class RadioBot(private val token: String) : ListenerAdapter() {
     private fun registerCommands(jda: JDA) {
         logger.info("Registering slash commands...")
         
-        val commands = mutableListOf<SlashCommandData>()
-
-        commands.addAll(searchHandler.getSearchCommands())
-
-        commands.addAll(audioHandler.getAudioCommands())
+        val commands = commandManager.getAllCommands()
 
         jda.updateCommands().addCommands(commands).queue(
             { 
@@ -281,19 +258,6 @@ class RadioBot(private val token: String) : ListenerAdapter() {
             )
         }
     }
-
-    private fun isSearchCommand(commandName: String): Boolean {
-        return commandName in listOf(
-            "search", "top", "country", 
-            "genre", "random", "help"
-        )
-    }
-
-    private fun isAudioCommand(commandName: String): Boolean {
-        return commandName in listOf(
-            "play", "stop", "volume", "nowplaying", "247"
-        )
-    }
     
     fun set247Mode(guildId: String, enabled: Boolean) {
         if (enabled) {
@@ -308,14 +272,6 @@ class RadioBot(private val token: String) : ListenerAdapter() {
     
     fun is247ModeEnabled(guildId: String): Boolean {
         return mode247Enabled[guildId] ?: false
-    }
-
-    private fun handleFavoritesCommand(event: SlashCommandInteractionEvent) {
-        val embed = uiBuilder.createErrorEmbed(
-            "Not Yet Available",
-            "The favorites function will be implemented in a future version."
-        )
-        event.replyEmbeds(embed).setEphemeral(true).queue()
     }
 
     fun getJDA(): JDA? = jda
