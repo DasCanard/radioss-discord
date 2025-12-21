@@ -1,6 +1,16 @@
 name: Build Dev
 
 on:
+  workflow_dispatch:
+    inputs:
+      build_arm:
+        description: 'Build ARM64 image'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
   push:
     branches: [ main ]
 
@@ -61,11 +71,24 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Set platform matrix
+      id: platform
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          if [ "${{ inputs.build_arm }}" == "true" ]; then
+            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          fi
+        else
+          echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+        fi
+
     - name: Build and push Docker image (dev)
       uses: docker/build-push-action@v5
       with:
         context: .
-        platforms: linux/amd64,linux/arm64
+        platforms: ${{ steps.platform.outputs.platforms }}
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
         cache-from: type=gha
