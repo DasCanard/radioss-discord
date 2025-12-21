@@ -89,14 +89,15 @@ class ReconnectionService(
         val allStates = database.loadAllStates()
         val invalidGuildIds = mutableListOf<String>()
         
-        if (jda == null) {
+        val jdaInstance = jda
+        if (jdaInstance == null) {
             logger.warn("JDA is null, cannot cleanup invalid states")
             return 0
         }
         
         for (state in allStates) {
             try {
-                val guild = jda.getGuildById(state.guildId)
+                val guild = jdaInstance.getGuildById(state.guildId)
                 
                 // Prüfe ob Guild noch existiert
                 if (guild == null) {
