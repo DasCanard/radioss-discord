@@ -1,6 +1,6 @@
 package me.richy.radioss.commands
 
-import me.richy.radioss.bot.RadioBot
+import me.richy.radioss.bot.VoiceChannelManager
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 
 class Command247(
     private val audioHandler: AudioHandler,
-    private val radioBot: RadioBot,
+    private val voiceChannelManager: VoiceChannelManager,
     private val uiBuilder: UIBuilder
 ) : Command {
     
@@ -29,11 +29,11 @@ class Command247(
             return
         }
         
-        val isCurrentlyEnabled = radioBot.is247ModeEnabled(guildId)
+        val isCurrentlyEnabled = voiceChannelManager.is247ModeEnabled(guildId)
         
         if (isCurrentlyEnabled) {
             // Deaktivieren
-            radioBot.set247Mode(guildId, false)
+            voiceChannelManager.set247Mode(guildId, false)
             val embed = uiBuilder.createSuccessEmbed(
                 "24/7-Modus deaktiviert",
                 "Der Bot wird den Channel wieder verlassen, wenn niemand mehr drin ist."
@@ -41,7 +41,7 @@ class Command247(
             event.replyEmbeds(embed).setEphemeral(true).queue()
         } else {
             // Aktivieren
-            radioBot.set247Mode(guildId, true)
+            voiceChannelManager.set247Mode(guildId, true)
             val embed = uiBuilder.createSuccessEmbed(
                 "24/7-Modus aktiviert",
                 "Der Bot bleibt jetzt 24/7 im Channel, auch wenn niemand mehr drin ist!"

@@ -1,3 +1,5 @@
+package me.richy.radioss
+
 object Version {
     const val VERSION = "0.6.0"
     const val NAME = "Radioss"

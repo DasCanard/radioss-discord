@@ -1,6 +1,6 @@
 package me.richy.radioss.ui
 
-import Version
+import me.richy.radioss.Version
 import me.richy.radioss.models.RadioStation
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.entities.MessageEmbed
