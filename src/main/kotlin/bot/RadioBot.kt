@@ -29,7 +29,9 @@ class RadioBot(private val token: String) : ListenerAdapter() {
     private val uiBuilder = UIBuilder()
     
     private val searchHandler = SearchHandler(api, uiBuilder)
-    private val audioHandler = AudioHandler(uiBuilder)
+    private val audioHandler = AudioHandler(uiBuilder).apply {
+        setRadioBot(this@RadioBot)
+    }
     private val buttonHandler = ButtonHandler(searchHandler, audioHandler, uiBuilder)
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
@@ -37,6 +39,7 @@ class RadioBot(private val token: String) : ListenerAdapter() {
     
     private val disconnectTimers = ConcurrentHashMap<String, Job>()
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val mode247Enabled = ConcurrentHashMap<String, Boolean>()
     
     fun start() {
         try {
@@ -188,7 +191,12 @@ class RadioBot(private val token: String) : ListenerAdapter() {
         logger.debug("Voice channel '${botChannel.name}' in guild '${guild.name}' has $humanMembersCount human members")
         
         if (humanMembersCount == 0) {
-            startDisconnectTimer(guildId)
+            // Nur Disconnect-Timer starten, wenn 24/7-Modus nicht aktiviert ist
+            if (!is247ModeEnabled(guildId)) {
+                startDisconnectTimer(guildId)
+            } else {
+                logger.debug("24/7-Modus aktiviert, kein Disconnect-Timer für guild '${guild.name}'")
+            }
         } else {
             cancelDisconnectTimer(guildId)
         }
@@ -283,8 +291,23 @@ class RadioBot(private val token: String) : ListenerAdapter() {
 
     private fun isAudioCommand(commandName: String): Boolean {
         return commandName in listOf(
-            "play", "stop", "volume", "nowplaying"
+            "play", "stop", "volume", "nowplaying", "247"
         )
+    }
+    
+    fun set247Mode(guildId: String, enabled: Boolean) {
+        if (enabled) {
+            mode247Enabled[guildId] = true
+            cancelDisconnectTimer(guildId)
+            logger.info("24/7-Modus aktiviert für guild $guildId")
+        } else {
+            mode247Enabled.remove(guildId)
+            logger.info("24/7-Modus deaktiviert für guild $guildId")
+        }
+    }
+    
+    fun is247ModeEnabled(guildId: String): Boolean {
+        return mode247Enabled[guildId] ?: false
     }
 
     private fun handleFavoritesCommand(event: SlashCommandInteractionEvent) {

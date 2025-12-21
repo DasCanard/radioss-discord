@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.richy.radioss.audio.GuildAudioManager
+import me.richy.radioss.bot.RadioBot
 import me.richy.radioss.models.RadioStation
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
@@ -16,6 +17,11 @@ import java.util.concurrent.ConcurrentHashMap
 class AudioHandler(
     private val uiBuilder: UIBuilder
 ) {
+    private var radioBot: RadioBot? = null
+    
+    fun setRadioBot(bot: RadioBot) {
+        this.radioBot = bot
+    }
     private val logger = LoggerFactory.getLogger(AudioHandler::class.java)
     private val audioManagers = ConcurrentHashMap<String, GuildAudioManager>()
     
@@ -29,7 +35,9 @@ class AudioHandler(
             Commands.slash("volume", "Set the volume")
                 .addOption(OptionType.INTEGER, "value", "Volume (0-100)", true),
             
-            Commands.slash("nowplaying", "Show current station")
+            Commands.slash("nowplaying", "Show current station"),
+            
+            Commands.slash("247", "Aktiviere 24/7-Modus - Bot bleibt im Channel")
         )
     }
     
@@ -54,6 +62,10 @@ class AudioHandler(
             
             "nowplaying" -> {
                 handleNowPlayingCommand(event, audioManager)
+            }
+            
+            "247" -> {
+                handle247Command(event, audioManager)
             }
         }
     }
@@ -194,5 +206,38 @@ class AudioHandler(
         
         val embed = uiBuilder.createAudioStatusEmbed(currentStation, volume, isPlaying)
         event.replyEmbeds(embed).setEphemeral(true).queue()
+    }
+    
+    private fun handle247Command(event: SlashCommandInteractionEvent, audioManager: GuildAudioManager) {
+        val guildId = event.guild?.id ?: return
+        
+        if (!isPlaying(guildId)) {
+            val errorEmbed = uiBuilder.createErrorEmbed(
+                "Kein Stream aktiv",
+                "Es muss ein Stream laufen, um den 24/7-Modus zu aktivieren!"
+            )
+            event.replyEmbeds(errorEmbed).setEphemeral(true).queue()
+            return
+        }
+        
+        val isCurrentlyEnabled = radioBot?.is247ModeEnabled(guildId) ?: false
+        
+        if (isCurrentlyEnabled) {
+            // Deaktivieren
+            radioBot?.set247Mode(guildId, false)
+            val embed = uiBuilder.createSuccessEmbed(
+                "24/7-Modus deaktiviert",
+                "Der Bot wird den Channel wieder verlassen, wenn niemand mehr drin ist."
+            )
+            event.replyEmbeds(embed).setEphemeral(true).queue()
+        } else {
+            // Aktivieren
+            radioBot?.set247Mode(guildId, true)
+            val embed = uiBuilder.createSuccessEmbed(
+                "24/7-Modus aktiviert",
+                "Der Bot bleibt jetzt 24/7 im Channel, auch wenn niemand mehr drin ist!"
+            )
+            event.replyEmbeds(embed).setEphemeral(true).queue()
+        }
     }
 }
