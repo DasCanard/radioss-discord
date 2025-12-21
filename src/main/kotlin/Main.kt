@@ -1,4 +1,5 @@
-import me.richy.radioss.bot.RadioBot
+import me.richy.radioss.Version
+import me.richy.radioss.bot.BotCore
 import org.slf4j.LoggerFactory
 
 private val logger = LoggerFactory.getLogger("Main")
@@ -15,7 +16,7 @@ fun main() {
     }
     
     try {
-        val bot = RadioBot(token)
+        val bot = BotCore(token)
         
         Runtime.getRuntime().addShutdownHook(Thread {
             logger.info("Shutdown signal received...")

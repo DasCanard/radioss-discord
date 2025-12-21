@@ -1,7 +1,7 @@
 package me.richy.radioss.commands
 
 import me.richy.radioss.api.RadioBrowserAPI
-import me.richy.radioss.bot.RadioBot
+import me.richy.radioss.bot.VoiceChannelManager
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.SearchHandler
 import me.richy.radioss.services.FavoriteService
@@ -16,7 +16,7 @@ class CommandManager(
     private val searchHandler: SearchHandler,
     private val favoriteService: FavoriteService,
     private val uiBuilder: UIBuilder,
-    private val radioBot: RadioBot
+    private val voiceChannelManager: VoiceChannelManager
 ) {
     private val logger = LoggerFactory.getLogger(CommandManager::class.java)
     
@@ -37,7 +37,7 @@ class CommandManager(
             "stop" to StopCommand(audioHandler, uiBuilder),
             "volume" to VolumeCommand(audioHandler, uiBuilder),
             "nowplaying" to NowPlayingCommand(audioHandler, favoriteService, uiBuilder),
-            "247" to Command247(audioHandler, radioBot, uiBuilder),
+            "247" to Command247(audioHandler, voiceChannelManager, uiBuilder),
             
             // Other Commands
             "favorites" to FavoritesCommand(favoriteService, searchHandler, uiBuilder)
