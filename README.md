@@ -16,6 +16,9 @@ A Discord bot for radio stations that uses the Radio Browser API and provides au
 - 🎯 **Intuitive Slash Commands**
 - 🔊 **Volume Control** with dropdown menu
 - 📱 **Pagination** for search results
+- ⭐ **Favorites System** for personal station lists
+- 🔄 **Reconnection Logic** on crash or update
+- 🕐 **24/7 Mode** for continuous operation
 
 ## 🚀 Setup
 
