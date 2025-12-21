@@ -2,6 +2,8 @@
 
 A Discord bot for radio stations that uses the Radio Browser API and provides audio streaming directly to Discord voice channels. The bot is operated via slash commands and offers an intuitive search for radio stations.
 
+**Hosted by me:** (24/7 HQ): [Invite](https://discord.com/oauth2/authorize?client_id=1376904142412316812)👋
+
 ## ✨ Features
 
 - 🔍 **Search for Radio Stations** by name, country, or genre
