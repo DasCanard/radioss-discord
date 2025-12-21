@@ -7,5 +7,6 @@ services:
     restart: always
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - ENABLE_RECONNECTION=${ENABLE_RECONNECTION:-false}
     volumes:
       - ./botdata:/app/data

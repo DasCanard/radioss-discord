@@ -2,12 +2,25 @@ package me.richy.radioss.handlers
 
 import me.richy.radioss.audio.GuildAudioManager
 import me.richy.radioss.models.RadioStation
+import me.richy.radioss.services.ReconnectionService
+import net.dv8tion.jda.api.JDA
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
 
 class AudioHandler {
     private val logger = LoggerFactory.getLogger(AudioHandler::class.java)
     private val audioManagers = ConcurrentHashMap<String, GuildAudioManager>()
+    private var reconnectionService: ReconnectionService? = null
+    private var jda: JDA? = null
+    
+    fun setReconnectionService(reconnectionService: ReconnectionService) {
+        this.reconnectionService = reconnectionService
+    }
+    
+    fun updateJDA(jda: JDA?) {
+        this.jda = jda
+        reconnectionService?.updateJDA(jda)
+    }
     
     fun playStation(guildId: String, station: RadioStation) {
         val audioManager = getOrCreateAudioManager(guildId)
@@ -21,8 +34,31 @@ class AudioHandler {
         if (streamUrl.isNotEmpty()) {
             audioManager.playTrack(streamUrl, station)
             logger.info("Track loading started for station '${station.name}' in guild $guildId")
+            
+            // Speichere Reconnection-State
+            saveReconnectionState(guildId, station)
         } else {
             logger.error("No valid URL for station '${station.name}'")
+        }
+    }
+    
+    private fun saveReconnectionState(guildId: String, station: RadioStation) {
+        val service = reconnectionService ?: return
+        val jdaInstance = jda ?: return
+        
+        try {
+            val guild = jdaInstance.getGuildById(guildId) ?: return
+            val audioManager = guild.audioManager
+            
+            // Prüfe ob Bot in einem Channel ist
+            val connectedChannel = audioManager.connectedChannel
+            if (connectedChannel != null) {
+                val mode247Enabled = false // Wird später von VoiceChannelManager aktualisiert
+                service.saveState(guildId, connectedChannel.id, station, mode247Enabled)
+                logger.debug("Saved reconnection state for guild $guildId, channel ${connectedChannel.id}")
+            }
+        } catch (e: Exception) {
+            logger.error("Error saving reconnection state for guild $guildId", e)
         }
     }
     

@@ -2,6 +2,7 @@ package me.richy.radioss.bot
 
 import kotlinx.coroutines.*
 import me.richy.radioss.handlers.AudioHandler
+import me.richy.radioss.services.ReconnectionService
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
 import org.slf4j.LoggerFactory
@@ -16,6 +17,11 @@ class VoiceChannelManager(
     
     private val disconnectTimers = ConcurrentHashMap<String, Job>()
     private val mode247Enabled = ConcurrentHashMap<String, Boolean>()
+    private var reconnectionService: ReconnectionService? = null
+    
+    fun setReconnectionService(reconnectionService: ReconnectionService) {
+        this.reconnectionService = reconnectionService
+    }
     
     fun updateJDA(jda: JDA?) {
         this.jda = jda
@@ -109,6 +115,27 @@ class VoiceChannelManager(
         } else {
             mode247Enabled.remove(guildId)
             logger.info("24/7-Modus deaktiviert für guild $guildId")
+        }
+        
+        // Aktualisiere Reconnection-State
+        updateReconnectionState(guildId, enabled)
+    }
+    
+    private fun updateReconnectionState(guildId: String, mode247Enabled: Boolean) {
+        val service = reconnectionService ?: return
+        val jdaInstance = jda ?: return
+        
+        try {
+            val guild = jdaInstance.getGuildById(guildId) ?: return
+            val audioManager = guild.audioManager
+            val connectedChannel = audioManager.connectedChannel ?: return
+            
+            val currentStation = audioHandler.getCurrentStation(guildId) ?: return
+            
+            service.saveState(guildId, connectedChannel.id, currentStation, mode247Enabled)
+            logger.debug("Updated reconnection state for guild $guildId with 24/7 mode: $mode247Enabled")
+        } catch (e: Exception) {
+            logger.error("Error updating reconnection state for guild $guildId", e)
         }
     }
     

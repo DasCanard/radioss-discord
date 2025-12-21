@@ -36,9 +36,11 @@ class BotCore(private val token: String) : ListenerAdapter() {
     private val buttonHandler = ButtonHandler(searchHandler, audioHandler, favoriteService, uiBuilder)
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
+    private val reconnectionModule = ReconnectionModule(audioHandler, voiceChannelManager, coroutineScope)
+    
     private val commandRegistrar = CommandRegistrar(commandManager)
     private val interactionDispatcher = InteractionEventDispatcher(commandManager, buttonHandler, selectMenuHandler, uiBuilder)
-    private val readyEventHandler = ReadyEventHandler(commandRegistrar)
+    private var readyEventHandler: ReadyEventHandler? = null
     
     private val lifecycleManager = BotLifecycleManager(token, favoriteService, voiceChannelManager)
     
@@ -47,14 +49,27 @@ class BotCore(private val token: String) : ListenerAdapter() {
     fun start() {
         jda = lifecycleManager.start(this)
         voiceChannelManager.updateJDA(jda)
+        
+        // Initialisiere Reconnection-Modul
+        if (jda != null) {
+            reconnectionModule.initialize(jda!!)
+        }
+        
+        // Erstelle ReadyEventHandler mit Reconnection-Modul
+        readyEventHandler = ReadyEventHandler(
+            commandRegistrar,
+            reconnectionModule.getReconnectionManager(),
+            reconnectionModule.getCleanupScheduler()
+        )
     }
     
     fun stop() {
+        reconnectionModule.shutdown()
         lifecycleManager.stop()
     }
     
     override fun onReady(event: ReadyEvent) {
-        readyEventHandler.handleReady(event)
+        readyEventHandler?.handleReady(event)
     }
     
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
