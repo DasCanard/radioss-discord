@@ -7,7 +7,8 @@ import org.slf4j.LoggerFactory
 class ReadyEventHandler(
     private val commandRegistrar: CommandRegistrar,
     private val reconnectionManager: ReconnectionManager?,
-    private val cleanupScheduler: CleanupScheduler?
+    private val cleanupScheduler: CleanupScheduler?,
+    private val uptimeHeartbeat: UptimeHeartbeat
 ) {
     private val logger = LoggerFactory.getLogger(ReadyEventHandler::class.java)
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
@@ -42,6 +43,9 @@ class ReadyEventHandler(
         } else {
             logger.debug("Reconnection feature is disabled (ENABLE_RECONNECTION not set or false)")
         }
+        
+        // Starte Uptime Heartbeat
+        uptimeHeartbeat.start()
     }
 }
 

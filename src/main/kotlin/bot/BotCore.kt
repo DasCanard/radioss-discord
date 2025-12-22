@@ -37,6 +37,7 @@ class BotCore(private val token: String) : ListenerAdapter() {
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
     private val reconnectionModule = ReconnectionModule(audioHandler, voiceChannelManager, coroutineScope)
+    private val uptimeHeartbeat = UptimeHeartbeat(coroutineScope)
     
     private val commandRegistrar = CommandRegistrar(commandManager)
     private val interactionDispatcher = InteractionEventDispatcher(commandManager, buttonHandler, selectMenuHandler, uiBuilder)
@@ -59,11 +60,13 @@ class BotCore(private val token: String) : ListenerAdapter() {
         readyEventHandler = ReadyEventHandler(
             commandRegistrar,
             reconnectionModule.getReconnectionManager(),
-            reconnectionModule.getCleanupScheduler()
+            reconnectionModule.getCleanupScheduler(),
+            uptimeHeartbeat
         )
     }
     
     fun stop() {
+        uptimeHeartbeat.stop()
         reconnectionModule.shutdown()
         lifecycleManager.stop()
     }

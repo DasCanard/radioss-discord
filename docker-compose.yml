@@ -8,5 +8,6 @@ services:
     environment:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ENABLE_RECONNECTION=${ENABLE_RECONNECTION:-false}
+      - UPTIME_HEARTBEAT_URL=${UPTIME_HEARTBEAT_URL:-}
     volumes:
       - ./botdata:/app/data

@@ -85,7 +85,11 @@ docker-compose up -d
 Create a `.env` file:
 ```env
 DISCORD_BOT_TOKEN=your_discord_bot_token_here
+UPTIME_HEARTBEAT_URL=https://uptime.betterstack.com/api/v1/heartbeat/your_heartbeat_id
 ```
+
+**Optional:**
+- `UPTIME_HEARTBEAT_URL`: URL for uptime monitoring (e.g. Better Stack). The bot sends a heartbeat every 60 seconds. If not set, the feature is disabled.
 
 ## 🛠️ Technical Details
 
