@@ -81,7 +81,7 @@ class RadioBrowserAPI {
                     return emptyList()
                 }
                 
-                val jsonResponse = response.body?.string() ?: ""
+                val jsonResponse = response.body.string()
                 if (jsonResponse.isEmpty()) {
                     logger.warn("Leere Antwort von Server")
                     return emptyList()

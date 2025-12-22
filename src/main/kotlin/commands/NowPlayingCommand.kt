@@ -4,7 +4,7 @@ import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.services.FavoriteService
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
+import net.dv8tion.jda.api.components.actionrow.ActionRow
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 

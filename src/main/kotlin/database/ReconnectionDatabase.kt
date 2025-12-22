@@ -95,7 +95,7 @@ class ReconnectionDatabase {
                     lastUpdated = rs.getLong("last_updated")
                 )
                 rs.close()
-                stmt?.close()
+                stmt.close()
                 state
             } else {
                 rs?.close()
