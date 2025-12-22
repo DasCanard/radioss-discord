@@ -1,7 +1,7 @@
 package me.richy.radioss
 
 object Version {
-    const val VERSION = "1.1.0"
+    const val VERSION = "1.2.0"
     const val NAME = "Radioss"
     
     val FULL_VERSION = "$NAME v$VERSION"
