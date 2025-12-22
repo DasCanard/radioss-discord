@@ -289,9 +289,10 @@ class UIBuilder {
                 "`/top [count]` - Top stations\n" +
                 "`/random` - Random station", false)
             .addField("🎵 Audio", 
-                "`/play <station>` - Play station\n" +
+                "`/play <station>` - Play direct stream url (.mp3, .m3u for example)\n" +
                 "`/stop` - Stop playback\n" +
                 "`/volume <value>` - Change volume\n" +
+                "`/247` - Enable 24/7 mode\n" +
                 "`/nowplaying` - Show current station", false)
             .addField("❤️ Favorites", 
                 "`/favorites` - Manage favorites", false)
