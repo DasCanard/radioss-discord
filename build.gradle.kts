@@ -14,7 +14,7 @@ repositories {
 
 dependencies {
     // Discord JDA für Discord Bot
-    implementation("net.dv8tion:JDA:5.1.0")
+    implementation("net.dv8tion:JDA:6.2.0")
     
     // Audio Player für Radio Streaming
     implementation("com.sedmelluq:lavaplayer:1.3.78")
