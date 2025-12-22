@@ -4,7 +4,7 @@ import me.richy.radioss.models.RadioStation
 import me.richy.radioss.services.FavoriteService
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent
-import net.dv8tion.jda.api.interactions.components.ActionRow
+import net.dv8tion.jda.api.components.actionrow.ActionRow
 import org.slf4j.LoggerFactory
 
 class ButtonHandler(
