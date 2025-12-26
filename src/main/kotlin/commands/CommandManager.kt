@@ -29,7 +29,7 @@ class CommandManager(
             "top" to TopCommand(api, searchHandler, favoriteService, uiBuilder),
             "country" to CountryCommand(api, searchHandler, favoriteService, uiBuilder),
             "genre" to GenreCommand(api, searchHandler, favoriteService, uiBuilder),
-            "random" to RandomCommand(api, uiBuilder),
+            "random" to RandomCommand(api, audioHandler, uiBuilder),
             "help" to HelpCommand(uiBuilder),
             
             // Audio Commands

@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import me.richy.radioss.api.RadioBrowserAPI
+import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.build.Commands
@@ -13,6 +14,7 @@ import kotlin.random.Random
 
 class RandomCommand(
     private val api: RadioBrowserAPI,
+    private val audioHandler: AudioHandler,
     private val uiBuilder: UIBuilder
 ) : Command {
     private val logger = LoggerFactory.getLogger(RandomCommand::class.java)
@@ -22,6 +24,19 @@ class RandomCommand(
     }
     
     override fun execute(event: SlashCommandInteractionEvent) {
+        val guildId = event.guild?.id ?: return
+        val member = event.member ?: return
+        val voiceState = member.voiceState ?: return
+        
+        if (!voiceState.inAudioChannel()) {
+            val errorEmbed = uiBuilder.createErrorEmbed(
+                "Not in Voice Channel",
+                "You must be in a voice channel to listen to radio!"
+            )
+            event.replyEmbeds(errorEmbed).setEphemeral(true).queue()
+            return
+        }
+        
         event.deferReply().queue()
         
         CoroutineScope(Dispatchers.IO).launch {
@@ -29,9 +44,37 @@ class RandomCommand(
                 val stations = api.getTopStations(500)
                 if (stations.isNotEmpty()) {
                     val randomStation = stations[Random.nextInt(stations.size)]
-                    val embed = uiBuilder.createStationInfoEmbed(randomStation)
                     
-                    event.hook.editOriginalEmbeds(embed).queue()
+                    val guild = event.guild ?: return@launch
+                    val audioChannel = voiceState.channel ?: return@launch
+                    
+                    try {
+                        guild.audioManager.openAudioConnection(audioChannel)
+                        logger.info("Bot connected to voice channel: ${audioChannel.name}")
+                        
+                        val guildAudioManager = audioHandler.getOrCreateAudioManager(guildId)
+                        guild.audioManager.sendingHandler = guildAudioManager.getSendHandler()
+                        logger.info("Audio send handler set for guild $guildId")
+                        
+                        audioHandler.playStation(guildId, randomStation)
+                        logger.info("Playing random station '${randomStation.name}' (URL: ${randomStation.url}) for user ${event.user.id} in guild $guildId")
+                        
+                        val successEmbed = uiBuilder.createSuccessEmbed(
+                            "🎵 Now Playing",
+                            "**${randomStation.name}** is now playing!"
+                        )
+                        
+                        event.hook.editOriginalEmbeds(successEmbed).queue()
+                    } catch (e: Exception) {
+                        logger.error("Error playing random station '${randomStation.name}'", e)
+                        
+                        val errorEmbed = uiBuilder.createErrorEmbed(
+                            "Playback Error",
+                            "Error playing station: ${e.message}"
+                        )
+                        
+                        event.hook.editOriginalEmbeds(errorEmbed).queue()
+                    }
                 } else {
                     val errorEmbed = uiBuilder.createErrorEmbed(
                         "No Stations", 
