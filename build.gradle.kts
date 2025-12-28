@@ -20,7 +20,7 @@ dependencies {
     implementation("com.sedmelluq:lavaplayer:1.3.78")
     
     // HTTP Client für Radio Browser API
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.3.2")
     
     // JSON Serialisierung
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
