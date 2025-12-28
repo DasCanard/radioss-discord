@@ -29,7 +29,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.23")
     
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     
     // SQLite Database
     implementation("org.xerial:sqlite-jdbc:3.51.1.0")
