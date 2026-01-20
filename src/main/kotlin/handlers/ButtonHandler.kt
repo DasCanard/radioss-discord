@@ -11,7 +11,8 @@ class ButtonHandler(
     private val searchHandler: SearchHandler,
     private val audioHandler: AudioHandler,
     private val favoriteService: FavoriteService,
-    private val uiBuilder: UIBuilder
+    private val uiBuilder: UIBuilder,
+    private val webhookLogger: me.richy.radioss.services.WebhookLogger
 ) {
     private val logger = LoggerFactory.getLogger(ButtonHandler::class.java)
     
@@ -83,6 +84,19 @@ class ButtonHandler(
                 
                 audioHandler.playStation(guildId, station)
                 logger.info("Playing station '${station.name}' (URL: ${station.url}) for user $userId in guild $guildId")
+                
+                // Webhook-Logging
+                val user = event.user
+                val guildName = guild.name
+                val stationUrl = station.urlResolved.ifEmpty { station.url }
+                webhookLogger.logPlayCommand(
+                    userId = user.id,
+                    userName = user.name,
+                    guildId = guildId,
+                    guildName = guildName,
+                    stationName = station.name,
+                    stationUrl = stationUrl
+                )
                 
                 val successEmbed = uiBuilder.createSuccessEmbed(
                     "🎵 Now Playing",
@@ -329,6 +343,19 @@ class ButtonHandler(
                 
                 audioHandler.playStation(guildId, station)
                 logger.info("Playing favorite station '${station.name}' for user $userId in guild $guildId")
+                
+                // Webhook-Logging
+                val user = event.user
+                val guildName = guild.name
+                val stationUrl = station.urlResolved.ifEmpty { station.url }
+                webhookLogger.logPlayCommand(
+                    userId = user.id,
+                    userName = user.name,
+                    guildId = guildId,
+                    guildName = guildName,
+                    stationName = station.name,
+                    stationUrl = stationUrl
+                )
                 
                 val successEmbed = uiBuilder.createSuccessEmbed(
                     "🎵 Now Playing",

@@ -15,7 +15,8 @@ import kotlin.random.Random
 class RandomCommand(
     private val api: RadioBrowserAPI,
     private val audioHandler: AudioHandler,
-    private val uiBuilder: UIBuilder
+    private val uiBuilder: UIBuilder,
+    private val webhookLogger: me.richy.radioss.services.WebhookLogger
 ) : Command {
     private val logger = LoggerFactory.getLogger(RandomCommand::class.java)
     
@@ -58,6 +59,19 @@ class RandomCommand(
                         
                         audioHandler.playStation(guildId, randomStation)
                         logger.info("Playing random station '${randomStation.name}' (URL: ${randomStation.url}) for user ${event.user.id} in guild $guildId")
+                        
+                        // Webhook-Logging
+                        val user = event.user
+                        val guildName = guild.name
+                        val stationUrl = randomStation.urlResolved.ifEmpty { randomStation.url }
+                        webhookLogger.logPlayCommand(
+                            userId = user.id,
+                            userName = user.name,
+                            guildId = guildId,
+                            guildName = guildName,
+                            stationName = randomStation.name,
+                            stationUrl = stationUrl
+                        )
                         
                         val successEmbed = uiBuilder.createSuccessEmbed(
                             "🎵 Now Playing",

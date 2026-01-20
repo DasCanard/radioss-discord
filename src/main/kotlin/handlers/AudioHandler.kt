@@ -88,4 +88,16 @@ class AudioHandler {
         }
     }
     
+    fun getAllActivePlayers(): Map<String, GuildAudioManager> {
+        return audioManagers.toMap()
+    }
+    
+    fun getActivePlayerCount(): Int {
+        return audioManagers.size
+    }
+    
+    fun getPlayingCount(): Int {
+        return audioManagers.values.count { it.isPlaying() }
+    }
+    
 }

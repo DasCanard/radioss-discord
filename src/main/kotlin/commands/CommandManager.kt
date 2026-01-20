@@ -4,8 +4,11 @@ import me.richy.radioss.api.RadioBrowserAPI
 import me.richy.radioss.bot.VoiceChannelManager
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.SearchHandler
+import me.richy.radioss.services.AdminService
 import me.richy.radioss.services.FavoriteService
+import me.richy.radioss.services.WebhookLogger
 import me.richy.radioss.ui.UIBuilder
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import org.slf4j.LoggerFactory
@@ -16,7 +19,10 @@ class CommandManager(
     private val searchHandler: SearchHandler,
     private val favoriteService: FavoriteService,
     private val uiBuilder: UIBuilder,
-    private val voiceChannelManager: VoiceChannelManager
+    private val voiceChannelManager: VoiceChannelManager,
+    private val webhookLogger: WebhookLogger,
+    private val adminService: AdminService,
+    private val jda: JDA?
 ) {
     private val logger = LoggerFactory.getLogger(CommandManager::class.java)
     
@@ -29,23 +35,32 @@ class CommandManager(
             "top" to TopCommand(api, searchHandler, favoriteService, uiBuilder),
             "country" to CountryCommand(api, searchHandler, favoriteService, uiBuilder),
             "genre" to GenreCommand(api, searchHandler, favoriteService, uiBuilder),
-            "random" to RandomCommand(api, audioHandler, uiBuilder),
+            "random" to RandomCommand(api, audioHandler, uiBuilder, webhookLogger),
             "help" to HelpCommand(uiBuilder),
             
             // Audio Commands
-            "play" to PlayCommand(audioHandler, uiBuilder),
+            "play" to PlayCommand(audioHandler, uiBuilder, webhookLogger),
             "stop" to StopCommand(audioHandler, uiBuilder),
             "volume" to VolumeCommand(audioHandler, uiBuilder),
             "nowplaying" to NowPlayingCommand(audioHandler, favoriteService, uiBuilder),
             "247" to Command247(audioHandler, voiceChannelManager, uiBuilder),
             
             // Other Commands
-            "favorites" to FavoritesCommand(favoriteService, searchHandler, uiBuilder)
+            "favorites" to FavoritesCommand(favoriteService, searchHandler, uiBuilder),
+            
+            // Admin Commands
+            "status" to StatusCommand(audioHandler, adminService, uiBuilder, jda)
         )
     }
     
     fun getAllCommands(): List<SlashCommandData> {
-        return commands.values.map { it.getCommandData() }
+        // Alle Commands außer Admin-Commands
+        return commands.filterKeys { it != "status" }.values.map { it.getCommandData() }
+    }
+    
+    fun getAdminCommands(): List<SlashCommandData> {
+        // Nur Admin-Commands
+        return commands.filterKeys { it == "status" }.values.map { it.getCommandData() }
     }
     
     fun executeCommand(event: SlashCommandInteractionEvent) {

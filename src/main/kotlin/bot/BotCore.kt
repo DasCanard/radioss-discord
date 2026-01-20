@@ -9,7 +9,9 @@ import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.handlers.ButtonHandler
 import me.richy.radioss.handlers.SearchHandler
 import me.richy.radioss.handlers.SelectMenuHandler
+import me.richy.radioss.services.AdminService
 import me.richy.radioss.services.FavoriteService
+import me.richy.radioss.services.WebhookLogger
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent
@@ -29,19 +31,21 @@ class BotCore(private val token: String) : ListenerAdapter() {
     private val searchHandler = SearchHandler()
     private val audioHandler = AudioHandler()
     
+    private val webhookLogger = WebhookLogger()
+    private val adminService = AdminService()
+    
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
     
     private val voiceChannelManager = VoiceChannelManager(null, audioHandler, coroutineScope)
-    private val commandManager = CommandManager(api, audioHandler, searchHandler, favoriteService, uiBuilder, voiceChannelManager)
-    private val buttonHandler = ButtonHandler(searchHandler, audioHandler, favoriteService, uiBuilder)
+    private var commandManager: CommandManager? = null
+    private var buttonHandler: ButtonHandler? = null
     private val selectMenuHandler = SelectMenuHandler(audioHandler, uiBuilder)
     
     private val reconnectionModule = ReconnectionModule(audioHandler, voiceChannelManager, coroutineScope)
     private val uptimeHeartbeat = UptimeHeartbeat(coroutineScope)
     
-    private val commandRegistrar = CommandRegistrar(commandManager)
-    private val interactionDispatcher = InteractionEventDispatcher(commandManager, buttonHandler, selectMenuHandler, uiBuilder)
     private var readyEventHandler: ReadyEventHandler? = null
+    private var interactionDispatcher: InteractionEventDispatcher? = null
     
     private val lifecycleManager = BotLifecycleManager(token, favoriteService, voiceChannelManager)
     
@@ -50,6 +54,27 @@ class BotCore(private val token: String) : ListenerAdapter() {
     fun start() {
         jda = lifecycleManager.start(this)
         voiceChannelManager.updateJDA(jda)
+        audioHandler.updateJDA(jda)
+        
+        // Initialisiere ButtonHandler mit WebhookLogger
+        buttonHandler = ButtonHandler(searchHandler, audioHandler, favoriteService, uiBuilder, webhookLogger)
+        
+        // Initialisiere CommandManager mit JDA
+        commandManager = CommandManager(
+            api, 
+            audioHandler, 
+            searchHandler, 
+            favoriteService, 
+            uiBuilder, 
+            voiceChannelManager,
+            webhookLogger,
+            adminService,
+            jda
+        )
+        
+        // Aktualisiere CommandRegistrar und InteractionDispatcher mit neuem CommandManager
+        val updatedCommandRegistrar = CommandRegistrar(commandManager!!, adminService)
+        interactionDispatcher = InteractionEventDispatcher(commandManager!!, buttonHandler!!, selectMenuHandler, uiBuilder)
         
         // Initialisiere Reconnection-Modul
         if (jda != null) {
@@ -58,7 +83,7 @@ class BotCore(private val token: String) : ListenerAdapter() {
         
         // Erstelle ReadyEventHandler mit Reconnection-Modul
         readyEventHandler = ReadyEventHandler(
-            commandRegistrar,
+            updatedCommandRegistrar,
             reconnectionModule.getReconnectionManager(),
             reconnectionModule.getCleanupScheduler(),
             uptimeHeartbeat
@@ -67,6 +92,7 @@ class BotCore(private val token: String) : ListenerAdapter() {
     
     fun stop() {
         uptimeHeartbeat.stop()
+        webhookLogger.shutdown()
         reconnectionModule.shutdown()
         lifecycleManager.stop()
     }
@@ -76,15 +102,17 @@ class BotCore(private val token: String) : ListenerAdapter() {
     }
     
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
-        interactionDispatcher.handleSlashCommand(event)
+        interactionDispatcher?.handleSlashCommand(event)
     }
     
     override fun onButtonInteraction(event: ButtonInteractionEvent) {
-        interactionDispatcher.handleButtonInteraction(event)
+        buttonHandler?.let {
+            interactionDispatcher?.handleButtonInteraction(event)
+        }
     }
     
     override fun onStringSelectInteraction(event: StringSelectInteractionEvent) {
-        interactionDispatcher.handleSelectMenuInteraction(event)
+        interactionDispatcher?.handleSelectMenuInteraction(event)
     }
     
     override fun onGuildVoiceUpdate(event: GuildVoiceUpdateEvent) {
