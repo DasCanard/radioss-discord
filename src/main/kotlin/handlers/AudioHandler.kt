@@ -50,10 +50,10 @@ class AudioHandler {
             val guild = jdaInstance.getGuildById(guildId) ?: return
             val audioManager = guild.audioManager
             
-            // Prüfe ob Bot in einem Channel ist
+            // Check if bot is in a channel
             val connectedChannel = audioManager.connectedChannel
             if (connectedChannel != null) {
-                val mode247Enabled = false // Wird später von VoiceChannelManager aktualisiert
+                val mode247Enabled = false // Will be updated later by VoiceChannelManager
                 service.saveState(guildId, connectedChannel.id, station, mode247Enabled)
                 logger.debug("Saved reconnection state for guild $guildId, channel ${connectedChannel.id}")
             }

@@ -49,11 +49,11 @@ class VoiceChannelManager(
         logger.debug("Voice channel '${botChannel.name}' in guild '${guild.name}' has $humanMembersCount human members")
         
         if (humanMembersCount == 0) {
-            // Nur Disconnect-Timer starten, wenn 24/7-Modus nicht aktiviert ist
+            // Only start disconnect timer if 24/7 mode is not enabled
             if (!is247ModeEnabled(guildId)) {
                 startDisconnectTimer(guildId)
             } else {
-                logger.debug("24/7-Modus aktiviert, kein Disconnect-Timer für guild '${guild.name}'")
+                logger.debug("24/7 mode enabled, no disconnect timer for guild '${guild.name}'")
             }
         } else {
             cancelDisconnectTimer(guildId)
@@ -111,13 +111,13 @@ class VoiceChannelManager(
         if (enabled) {
             mode247Enabled[guildId] = true
             cancelDisconnectTimer(guildId)
-            logger.info("24/7-Modus aktiviert für guild $guildId")
+            logger.info("24/7 mode enabled for guild $guildId")
         } else {
             mode247Enabled.remove(guildId)
-            logger.info("24/7-Modus deaktiviert für guild $guildId")
+            logger.info("24/7 mode disabled for guild $guildId")
         }
         
-        // Aktualisiere Reconnection-State
+        // Update reconnection state
         updateReconnectionState(guildId, enabled)
     }
     

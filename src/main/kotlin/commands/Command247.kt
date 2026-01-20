@@ -14,7 +14,7 @@ class Command247(
 ) : Command {
     
     override fun getCommandData(): SlashCommandData {
-        return Commands.slash("247", "Aktiviere 24/7-Modus - Bot bleibt im Channel")
+        return Commands.slash("247", "Enable 24/7 mode - Bot stays in channel")
     }
     
     override fun execute(event: SlashCommandInteractionEvent) {
@@ -22,8 +22,8 @@ class Command247(
         
         if (!audioHandler.isPlaying(guildId)) {
             val errorEmbed = uiBuilder.createErrorEmbed(
-                "Kein Stream aktiv",
-                "Es muss ein Stream laufen, um den 24/7-Modus zu aktivieren!"
+                "No active stream",
+                "A stream must be playing to activate 24/7 mode!"
             )
             event.replyEmbeds(errorEmbed).setEphemeral(true).queue()
             return
@@ -32,19 +32,19 @@ class Command247(
         val isCurrentlyEnabled = voiceChannelManager.is247ModeEnabled(guildId)
         
         if (isCurrentlyEnabled) {
-            // Deaktivieren
+            // Disable
             voiceChannelManager.set247Mode(guildId, false)
             val embed = uiBuilder.createSuccessEmbed(
-                "24/7-Modus deaktiviert",
-                "Der Bot wird den Channel wieder verlassen, wenn niemand mehr drin ist."
+                "24/7 mode disabled",
+                "The bot will leave the channel again when no one is in it."
             )
             event.replyEmbeds(embed).setEphemeral(true).queue()
         } else {
-            // Aktivieren
+            // Enable
             voiceChannelManager.set247Mode(guildId, true)
             val embed = uiBuilder.createSuccessEmbed(
-                "24/7-Modus aktiviert",
-                "Der Bot bleibt jetzt 24/7 im Channel, auch wenn niemand mehr drin ist!"
+                "24/7 mode enabled",
+                "The bot will now stay 24/7 in the channel, even when no one is in it!"
             )
             event.replyEmbeds(embed).setEphemeral(true).queue()
         }

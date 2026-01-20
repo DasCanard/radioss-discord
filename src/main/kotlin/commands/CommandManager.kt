@@ -47,6 +47,8 @@ class CommandManager(
             
             // Other Commands
             "favorites" to FavoritesCommand(favoriteService, searchHandler, uiBuilder),
+            "vote" to VoteCommand(uiBuilder),
+            "feedback" to FeedbackCommand(uiBuilder),
             
             // Admin Commands
             "status" to StatusCommand(audioHandler, adminService, uiBuilder, jda)
@@ -54,12 +56,12 @@ class CommandManager(
     }
     
     fun getAllCommands(): List<SlashCommandData> {
-        // Alle Commands außer Admin-Commands
+        // All commands except admin commands
         return commands.filterKeys { it != "status" }.values.map { it.getCommandData() }
     }
     
     fun getAdminCommands(): List<SlashCommandData> {
-        // Nur Admin-Commands
+        // Only admin commands
         return commands.filterKeys { it == "status" }.values.map { it.getCommandData() }
     }
     
