@@ -83,6 +83,7 @@ jobs:
         echo "jar_name=$(basename $JAR_FILE)" >> $GITHUB_OUTPUT
 
     - name: Create Release
+      id: release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ github.ref_name }}
@@ -92,11 +93,33 @@ jobs:
         draft: false
         prerelease: false
 
+    - name: Get Release Notes
+      id: release_notes
+      run: |
+        RELEASE_NOTES=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" \
+          | jq -r '.body // "No changelog available"')
+        # Fallback falls leer
+        if [ -z "$RELEASE_NOTES" ] || [ "$RELEASE_NOTES" = "null" ]; then
+          RELEASE_NOTES="No changelog available"
+        fi
+        # Kürze auf ~1500 Zeichen falls zu lang (Discord Limit ist 2000)
+        RELEASE_LENGTH=${#RELEASE_NOTES}
+        if [ $RELEASE_LENGTH -gt 1500 ]; then
+          RELEASE_NOTES="${RELEASE_NOTES:0:1500}...\n(Changelog gekürzt)"
+        fi
+        # Escape für JSON
+        RELEASE_NOTES=$(echo "$RELEASE_NOTES" | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
     - name: Send Discord notification
       if: success()
       run: |
+        CHANGELOG="${{ steps.release_notes.outputs.notes }}"
         curl -H "Content-Type: application/json" \
-          -d '{"content": "🚀 **New Update Available!**\n\nA new update has been pushed. The bot will automatically restart in 10-20 minutes.\n\n📦 [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }})"}' \
+          -d "{\"content\": \"🚀 **New Update Available!**\n\nA new update has been pushed. The bot will automatically restart in 10-20 minutes.\n\n**Changelog:**\n\`\`\`\n${CHANGELOG}\n\`\`\`\"}" \
           ${{ secrets.DISCORD_WEBHOOK }}
 
     - name: Set up Docker Buildx
