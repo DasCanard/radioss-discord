@@ -296,6 +296,9 @@ class UIBuilder {
                 "`/nowplaying` - Show current station", false)
             .addField("❤️ Favorites", 
                 "`/favorites` - Manage favorites", false)
+            .addField("🗳️ Support", 
+                "`/vote` - Vote for the bot on top.gg\n" +
+                "`/feedback` - Show Discord server for updates and feedback", false)
             .addField("ℹ️ Info", 
                 "`/help` - Show this help", false)
             .addField("🎮 Usage", 

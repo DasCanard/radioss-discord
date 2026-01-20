@@ -24,20 +24,20 @@ class StatusCommand(
     private val startTime = Instant.now()
     
     override fun getCommandData(): SlashCommandData {
-        return Commands.slash("status", "Zeige Bot-Status und Statistiken")
+        return Commands.slash("status", "Show bot status and statistics")
             .addSubcommands(
-                SubcommandData("player", "Zeige laufende Player und Player-Statistiken"),
-                SubcommandData("guild", "Zeige Guild-Statistiken"),
-                SubcommandData("system", "Zeige System-Informationen")
+                SubcommandData("player", "Show running players and player statistics"),
+                SubcommandData("guild", "Show guild statistics"),
+                SubcommandData("system", "Show system information")
             )
     }
     
     override fun execute(event: SlashCommandInteractionEvent) {
-        // Prüfe Admin-Berechtigung
+        // Check admin permission
         if (!adminService.isAdmin(event.user.id)) {
             val errorEmbed = uiBuilder.createErrorEmbed(
-                "Keine Berechtigung",
-                "Du hast keine Berechtigung, diesen Command auszuführen."
+                "No permission",
+                "You don't have permission to execute this command."
             )
             event.replyEmbeds(errorEmbed).setEphemeral(true).queue()
             return
@@ -51,8 +51,8 @@ class StatusCommand(
             "system" -> handleSystemSubcommand(event)
             else -> {
                 val errorEmbed = uiBuilder.createErrorEmbed(
-                    "Ungültiger Subcommand",
-                    "Bitte verwende einen gültigen Subcommand: `player`, `guild` oder `system`"
+                    "Invalid subcommand",
+                    "Please use a valid subcommand: `player`, `guild` or `system`"
                 )
                 event.replyEmbeds(errorEmbed).setEphemeral(true).queue()
             }
@@ -71,8 +71,8 @@ class StatusCommand(
         val embed = net.dv8tion.jda.api.EmbedBuilder()
             .setTitle("🎵 Player Status")
             .setColor(java.awt.Color.CYAN)
-            .addField("Aktive Player", "$totalPlayers", true)
-            .addField("Laufende Streams", "$playingCount", true)
+            .addField("Active Players", "$totalPlayers", true)
+            .addField("Running Streams", "$playingCount", true)
         
         if (activePlayers.isNotEmpty()) {
             val playerList = activePlayers.take(10).joinToString("\n") { player ->
@@ -80,23 +80,23 @@ class StatusCommand(
                 val station = player.currentStation
                 val volume = player.volume
                 val status = if (player.isPlaying) "▶️" else "⏸️"
-                val stationName = station?.name ?: "Unbekannt"
-                val guildName = jda?.getGuildById(guildId)?.name ?: "Unbekannt"
+                val stationName = station?.name ?: "Unknown"
+                val guildName = jda?.getGuildById(guildId)?.name ?: "Unknown"
                 "$status **$guildName** - $stationName (🔊 $volume%)"
             }
             
             if (activePlayers.size > 10) {
-                embed.addField("Aktive Player (Top 10)", playerList, false)
-                embed.setFooter("Zeige ${activePlayers.size - 10} weitere...")
+                embed.addField("Active Players (Top 10)", playerList, false)
+                embed.setFooter("Showing ${activePlayers.size - 10} more...")
             } else {
-                embed.addField("Aktive Player", playerList, false)
+                embed.addField("Active Players", playerList, false)
             }
             
-            // Durchschnittliche Lautstärke
+            // Average volume
             val avgVolume = activePlayers.map { it.volume }.average().toInt()
-            embed.addField("Durchschnittliche Lautstärke", "$avgVolume%", true)
+            embed.addField("Average Volume", "$avgVolume%", true)
         } else {
-            embed.addField("Keine aktiven Player", "Es laufen derzeit keine Streams.", false)
+            embed.addField("No active players", "No streams are currently running.", false)
         }
         
         embed.setFooter(Version.FOOTER_TEXT)
@@ -108,8 +108,8 @@ class StatusCommand(
         
         val jdaInstance = jda ?: run {
             val errorEmbed = uiBuilder.createErrorEmbed(
-                "Fehler",
-                "JDA-Instanz nicht verfügbar"
+                "Error",
+                "JDA instance not available"
             )
             event.hook.editOriginalEmbeds(errorEmbed).queue()
             return
@@ -124,14 +124,14 @@ class StatusCommand(
             .setTitle("🏰 Guild Status")
             .setColor(java.awt.Color.GREEN)
             .addField("Guilds", "$totalGuilds", true)
-            .addField("Gesamt User", "$totalMembers", true)
-            .addField("Unique User", "$uniqueUsers", true)
+            .addField("Total Users", "$totalMembers", true)
+            .addField("Unique Users", "$uniqueUsers", true)
         
-        // Top 5 Guilds nach Mitgliederzahl
+        // Top 5 Guilds by member count
         val topGuilds = guilds.sortedByDescending { it.memberCount }.take(5)
         if (topGuilds.isNotEmpty()) {
             val topGuildsList = topGuilds.joinToString("\n") { guild ->
-                "**${guild.name}** - ${guild.memberCount} Mitglieder"
+                "**${guild.name}** - ${guild.memberCount} members"
             }
             embed.addField("Top 5 Guilds", topGuildsList, false)
         }
@@ -187,7 +187,7 @@ class StatusCommand(
         }
     }
     
-    // Hilfsstruktur für Player-Informationen
+    // Helper structure for player information
     private data class PlayerInfo(
         val guildId: String,
         val isPlaying: Boolean,
@@ -195,7 +195,7 @@ class StatusCommand(
         val volume: Int
     )
     
-    // Methode zum Abrufen aktiver Player
+    // Method to retrieve active players
     private fun getActivePlayers(): List<PlayerInfo> {
         val activePlayers = audioHandler.getAllActivePlayers()
         return activePlayers.map { (guildId, manager) ->
