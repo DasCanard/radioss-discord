@@ -22,9 +22,8 @@ class BotLifecycleManager(
             jda = JDABuilder.createDefault(token)
                 .addEventListeners(eventListener)
                 .enableIntents(
-                    GatewayIntent.GUILD_VOICE_STATES,
-                    GatewayIntent.GUILD_MESSAGES,
-                    GatewayIntent.MESSAGE_CONTENT
+                    GatewayIntent.GUILD_MEMBERS,
+                    GatewayIntent.GUILD_VOICE_STATES
                 )
                 .setActivity(Activity.listening("Radio Streams 🎵"))
                 .build()
