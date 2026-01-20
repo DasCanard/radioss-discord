@@ -9,5 +9,8 @@ services:
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - ENABLE_RECONNECTION=${ENABLE_RECONNECTION:-false}
       - UPTIME_HEARTBEAT_URL=${UPTIME_HEARTBEAT_URL:-}
+      - LOG_WEBHOOK_URL=${LOG_WEBHOOK_URL:-}
+      - ADMIN_USER_IDS=${ADMIN_USER_IDS:-}
+      - ADMIN_GUILD_IDS=${ADMIN_GUILD_IDS:-}
     volumes:
       - ./botdata:/app/data

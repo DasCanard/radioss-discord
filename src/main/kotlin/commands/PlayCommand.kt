@@ -2,6 +2,7 @@ package me.richy.radioss.commands
 
 import me.richy.radioss.handlers.AudioHandler
 import me.richy.radioss.models.RadioStation
+import me.richy.radioss.services.WebhookLogger
 import me.richy.radioss.ui.UIBuilder
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -10,7 +11,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 
 class PlayCommand(
     private val audioHandler: AudioHandler,
-    private val uiBuilder: UIBuilder
+    private val uiBuilder: UIBuilder,
+    private val webhookLogger: WebhookLogger
 ) : Command {
     
     override fun getCommandData(): SlashCommandData {
@@ -50,6 +52,18 @@ class PlayCommand(
                 urlResolved = stationInput
             )
             audioManager.playTrack(stationInput, station)
+            
+            // Webhook-Logging
+            val user = event.user
+            val guildName = guild.name
+            webhookLogger.logPlayCommand(
+                userId = user.id,
+                userName = user.name,
+                guildId = guildId,
+                guildName = guildName,
+                stationName = station.name,
+                stationUrl = stationInput
+            )
             
             val successEmbed = uiBuilder.createSuccessEmbed(
                 "Stream Started",
